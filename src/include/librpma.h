@@ -184,6 +184,11 @@ enum rpma_conn_event {
  */
 int rpma_conn_next_event(struct rpma_conn *conn, enum rpma_conn_event *event);
 
+/** 3
+ * XXX
+ */
+const char *rpma_utils_conn_event_2str(enum rpma_conn_event conn_event);
+
 struct rpma_conn_private_data {
 	void *ptr;
 	uint8_t len;
@@ -493,5 +498,16 @@ int rpma_err_get_provider_error(void);
  * .B <https://pmem.io>
  */
 const char *rpma_err_get_msg(void);
+
+/** 3
+ * rpma_err_2str - convert RPMA error code to a string
+ *
+ * SYNOPSIS
+ *
+ *	#include <librpma.h>
+ *
+ *	const char *rpma_err_2str(int ret);
+ */
+const char *rpma_err_2str(int ret);
 
 #endif /* LIBRPMA_H */
