@@ -9,6 +9,7 @@
 
 #include "cmocka_alloc.h"
 #include "conn.h"
+#include "private_data.h"
 #include "rpma_err.h"
 #include "out.h"
 
@@ -16,6 +17,8 @@ struct rpma_conn {
 	struct rdma_cm_id *id; /* a CM ID of the connection */
 	struct rdma_event_channel *evch; /* event channel of the CM ID */
 	struct ibv_cq *cq; /* completion queue of the CM ID */
+
+	struct rpma_conn_private_data *pdata; /* private data of the CM ID */
 };
 
 /* internal librpma API */
@@ -55,6 +58,7 @@ rpma_conn_new(struct rdma_cm_id *id, struct ibv_cq *cq,
 		goto err_migrate_id_NULL;
 	}
 
+	memset(conn, 0, sizeof(*conn));
 	conn->id = id;
 	conn->evch = evch;
 	conn->cq = cq;
@@ -69,6 +73,18 @@ err_destroy_evch:
 	rdma_destroy_event_channel(evch);
 
 	return ret;
+}
+
+/*
+ * rpma_conn_set_private_data -- XXX
+ */
+int
+rpma_conn_set_private_data(struct rpma_conn *conn,
+		struct rpma_conn_private_data *pdata)
+{
+	conn->pdata = pdata;
+
+	return 0;
 }
 
 /* public librpma API */
@@ -86,6 +102,12 @@ rpma_conn_next_event(struct rpma_conn *conn, enum rpma_conn_event *event)
 	if (rdma_get_cm_event(conn->evch, &edata)) {
 		Rpma_provider_error = errno;
 		return RPMA_E_PROVIDER;
+	}
+
+	if (edata->event == RDMA_CM_EVENT_ESTABLISHED && conn->pdata == NULL) {
+		int ret = rpma_private_data_new(edata, &conn->pdata);
+		if (ret)
+			return ret;
 	}
 
 	enum rdma_cm_event_type cm_event = edata->event;
@@ -114,13 +136,15 @@ rpma_conn_next_event(struct rpma_conn *conn, enum rpma_conn_event *event)
 }
 
 /*
- * rpma_conn_get_private_data -- XXX
+ * rpma_conn_get_private_data -- hand a pointer to the connection's private data
  */
 int
 rpma_conn_get_private_data(struct rpma_conn *conn,
-		struct rpma_conn_private_data *pdata)
+		struct rpma_conn_private_data **pdata_ptr)
 {
-	return RPMA_E_NOSUPP;
+	*pdata_ptr = conn->pdata;
+
+	return 0;
 }
 
 /*
@@ -171,6 +195,7 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 
 	rdma_destroy_event_channel(conn->evch);
 
+	(void) rpma_private_data_delete(&conn->pdata);
 	Free(conn);
 	*conn_ptr = NULL;
 

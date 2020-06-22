@@ -219,14 +219,17 @@ struct rpma_conn_private_data {
  *	#include <librpma.h>
  *
  *	int rpma_conn_get_private_data(struct rpma_conn *conn,
- *	    struct rpma_conn_private_data *pdata);
+ *	    struct rpma_conn_private_data **pdata);
  *
  * DESCRIPTION
  * Obtain a pointer to the private data given by the other side of the
  * connection.
+ *
+ * ERRORS
+ * rpma_conn_get_private_data() cannot fail.
  */
 int rpma_conn_get_private_data(struct rpma_conn *conn,
-		struct rpma_conn_private_data *pdata);
+		struct rpma_conn_private_data **pdata);
 
 /** 3
  * rpma_conn_disconnect - initialize disconnection

@@ -115,6 +115,25 @@ rdma_migrate_id(struct rdma_cm_id *id, struct rdma_event_channel *channel)
 	return 0;
 }
 
+/*
+ * rpma_private_data_new -- rpma_private_data_new()  mock
+ */
+int
+rpma_private_data_new(struct rdma_cm_event *edata,
+		struct rpma_conn_private_data **pdata_ptr)
+{
+	return RPMA_E_NOSUPP; /* XXX */
+}
+
+/*
+ * rpma_private_data_delete -- rpma_private_data_delete() mock
+ */
+int
+rpma_private_data_delete(struct rpma_conn_private_data **pdata_ptr)
+{
+	return RPMA_E_NOSUPP; /* XXX */
+}
+
 void *__real__test_malloc(size_t size);
 
 /*

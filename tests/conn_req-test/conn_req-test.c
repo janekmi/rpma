@@ -96,6 +96,16 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 }
 
 /*
+ * rpma_conn_set_private_data -- rpma_conn_set_private_data() mock
+ */
+int
+rpma_conn_set_private_data(struct rpma_conn *conn,
+		struct rpma_conn_private_data *pdata)
+{
+	return RPMA_E_NOSUPP; /* XXX */
+}
+
+/*
  * ibv_create_cq -- ibv_create_cq() mock
  */
 struct ibv_cq *
@@ -359,6 +369,25 @@ rdma_disconnect(struct rdma_cm_id *id)
 		return -1;
 
 	return 0;
+}
+
+/*
+ * rpma_private_data_new -- rpma_private_data_new()  mock
+ */
+int
+rpma_private_data_new(struct rdma_cm_event *edata,
+		struct rpma_conn_private_data **pdata_ptr)
+{
+	return RPMA_E_NOSUPP; /* XXX */
+}
+
+/*
+ * rpma_private_data_delete -- rpma_private_data_delete() mock
+ */
+int
+rpma_private_data_delete(struct rpma_conn_private_data **pdata_ptr)
+{
+	return RPMA_E_NOSUPP; /* XXX */
 }
 
 void *__real__test_malloc(size_t size);

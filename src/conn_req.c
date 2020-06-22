@@ -15,6 +15,7 @@
 #include "info.h"
 #include "out.h"
 #include "peer.h"
+#include "private_data.h"
 #include "rpma_err.h"
 
 struct rpma_conn_req {
@@ -24,6 +25,9 @@ struct rpma_conn_req {
 	struct rdma_cm_id *id;
 	/* completion queue of the CM ID */
 	struct ibv_cq *cq;
+
+	/* private data of the CM ID (incoming only) */
+	struct rpma_conn_private_data *pdata;
 };
 
 /*
@@ -63,6 +67,7 @@ rpma_conn_req_from_id(struct rpma_peer *peer, struct rdma_cm_id *id,
 	(*req)->edata = NULL;
 	(*req)->id = id;
 	(*req)->cq = cq;
+	(*req)->pdata = NULL;
 
 	return 0;
 
@@ -109,6 +114,8 @@ rpma_conn_req_accept(struct rpma_conn_req *req,
 	ret = rpma_conn_new(req->id, req->cq, &conn);
 	if (ret)
 		goto err_conn_disconnect;
+
+	(void) rpma_conn_set_private_data(conn, req->pdata);
 
 	*conn_ptr = conn;
 	return 0;
@@ -238,15 +245,26 @@ rpma_conn_req_from_cm_event(struct rpma_peer *peer, struct rdma_cm_event *edata,
 	if (edata->event != RDMA_CM_EVENT_CONNECT_REQUEST)
 		return RPMA_E_INVAL;
 
-	struct rpma_conn_req *req = NULL;
-	int ret = rpma_conn_req_from_id(peer, edata->id, &req);
+	struct rpma_conn_private_data *pdata = NULL;
+	int ret = rpma_private_data_new(edata, &pdata);
 	if (ret)
 		return ret;
 
+	struct rpma_conn_req *req = NULL;
+	ret = rpma_conn_req_from_id(peer, edata->id, &req);
+	if (ret)
+		goto err_private_data_delete;
+
 	req->edata = edata;
+	req->pdata = pdata;
 	*req_ptr = req;
 
 	return 0;
+
+err_private_data_delete:
+	(void) rpma_private_data_delete(&pdata);
+
+	return ret;
 }
 
 /* public librpma API */
@@ -373,6 +391,7 @@ rpma_conn_req_delete(struct rpma_conn_req **req_ptr)
 	else
 		ret = rpma_conn_req_destroy(req);
 
+	(void) rpma_private_data_delete(&req->pdata);
 	Free(req);
 	*req_ptr = NULL;
 
