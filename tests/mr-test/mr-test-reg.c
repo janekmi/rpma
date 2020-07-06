@@ -4,7 +4,11 @@
  */
 
 /*
- * mr-test.c -- the memory region unit tests
+ * mr-test.c -- the memory region registration/deregistration unit tests
+ *
+ * APIs covered:
+ * - rpma_mr_reg()
+ * - rpma_mr_dereg()
  */
 
 #include <stdlib.h>

@@ -4,7 +4,14 @@
  */
 
 /*
- * mr-serialize.c -- the memory region unit tests
+ * mr-serialize.c -- the memory region serialization unit tests
+ *
+ * APIs covered:
+ * - rpma_mr_serialize_get_size()
+ * - rpma_mr_serialize()
+ * - rpma_mr_deserialize()
+ * - rpma_mr_remote_delete()
+ * - rpma_mr_remote_get_size()
  */
 
 #include <stdlib.h>
