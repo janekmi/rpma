@@ -4,10 +4,10 @@
  */
 
 /*
- * mr-common.c -- the memory region unit tests's common functions
+ * mr-test-common.c -- the memory region unit tests's common functions
  */
 
-#include "mr-common.h"
+#include "mr-test-common.h"
 
 void *__real__test_malloc(size_t size);
 

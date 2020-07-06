@@ -4,7 +4,7 @@
  */
 
 /*
- * mr-common.h -- the memory region unit tests's common definitions
+ * mr-test-common.h -- the memory region unit tests's common definitions
  */
 
 #ifndef MR_COMMON_H

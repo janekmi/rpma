@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <infiniband/verbs.h>
 
-#include "mr-common.h"
+#include "mr-test-common.h"
 
 /* rpma_mr_reg() unit tests */
 

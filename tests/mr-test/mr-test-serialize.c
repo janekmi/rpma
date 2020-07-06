@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <infiniband/verbs.h>
 
-#include "mr-common.h"
+#include "mr-test-common.h"
 
 /* setups & teardowns */
 
