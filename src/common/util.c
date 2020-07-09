@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 #include <errno.h>
 #include "out.h"
 
