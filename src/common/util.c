@@ -5,9 +5,9 @@
  * util.c -- very basic utilities
  */
 
-#include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include "out.h"
 
