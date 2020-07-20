@@ -218,6 +218,8 @@ main(int argc, char *argv[])
 	}
 #endif
 
+	(void) printf("Translation: %s\n", hello->str);
+
 err_mr_dereg:
 	/* deregister the memory region */
 	ret = rpma_mr_dereg(&mr);
