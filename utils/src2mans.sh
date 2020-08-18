@@ -40,7 +40,7 @@ do
 		rm $f.tmp
 		
 		# generate a md file
-		cat mans_header.md > md/$f.md
+		cat ../../utils/mans_header.md > md/$f.md
 		mandoc -man -T markdown $f >> md/$f.md
 	done
 	rm $MANUALS $ERRORS
