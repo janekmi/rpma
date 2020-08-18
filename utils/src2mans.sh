@@ -41,7 +41,7 @@ do
 		
 		# generate a md file
 		cat ../../utils/mans_header.md > md/$f.md
-		mandoc -man -T markdown $f >> md/$f.md
+		pandoc -s $f -o - -f docbook -t markdown >> md/$f.md
 	done
 	rm $MANUALS $ERRORS
 done
