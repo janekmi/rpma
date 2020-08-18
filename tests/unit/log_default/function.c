@@ -75,6 +75,8 @@ typedef struct {
 	int snprintf_error;
 
 	rpma_log_level secondary;
+
+	char *path;
 } mock_config;
 
 /*
@@ -157,11 +159,13 @@ function__syslog_no_path(void **unused)
 }
 
 /*
- * function__syslog_absolute_path -- syslog() using an absolute path
+ * function__syslog -- syslog() using either an absolute or relative path
  */
 void
-function__syslog_absolute_path(void **unused)
+function__syslog(void **config_ptr)
 {
+	mock_config *config = (mock_config *)*config_ptr;
+
 	/* configure mocks */
 	will_return(__wrap_vsnprintf, MOCK_OK);
 	will_return(__wrap_snprintf, MOCK_OK);
@@ -179,40 +183,8 @@ function__syslog_absolute_path(void **unused)
 	expect_string(syslog, syslog_output, msg);
 
 	/* run test */
-	rpma_log_default_function(MOCK_LOG_LEVEL, MOCK_FILE_NAME_ABSOLUTE,
+	rpma_log_default_function(MOCK_LOG_LEVEL, config->path,
 			MOCK_LINE_NUMBER, MOCK_FUNCTION_NAME, MOCK_MESSAGE);
-}
-
-/*
- * function__syslog_relative_path -- syslog() using a relative path
- */
-void
-function__syslog_relative_path(void **unused)
-{
-	for (rpma_log_level level = RPMA_LOG_LEVEL_FATAL;
-			level <= RPMA_LOG_LEVEL_DEBUG; ++level) {
-
-		/* configure mocks */
-		will_return(__wrap_vsnprintf, MOCK_OK);
-		will_return(__wrap_snprintf, MOCK_OK);
-		will_return(syslog, MOCK_VALIDATE);
-		expect_value(syslog, priority,
-				rpma_log_level_syslog_severity[level]);
-
-		/* construct the resulting syslog message */
-		char msg[MOCK_BUFF_LEN] = "";
-		strcat(msg,
-			MOCK_FILE_NAME ":  " STR(MOCK_LINE_NUMBER) ": "
-			MOCK_FUNCTION_NAME ": *");
-		strcat(msg, rpma_log_level_names[level]);
-		strcat(msg, "*: " MOCK_MESSAGE);
-		expect_string(syslog, syslog_output, msg);
-
-		/* run test */
-		rpma_log_default_function(level, MOCK_FILE_NAME,
-				MOCK_LINE_NUMBER, MOCK_FUNCTION_NAME,
-				MOCK_MESSAGE);
-	}
 }
 
 #define MOCK_TIME_OF_DAY {00, 00, 00, 1, 0, 70, 0, 365, 0}
@@ -282,7 +254,7 @@ function__stderr_path(void **config_ptr)
 	expect_string(__wrap_fprintf, fprintf_output, msg);
 
 	/* run test */
-	rpma_log_default_function(MOCK_LOG_LEVEL, MOCK_FILE_NAME,
+	rpma_log_default_function(MOCK_LOG_LEVEL, config->path,
 			MOCK_LINE_NUMBER, MOCK_FUNCTION_NAME, "%s",
 			MOCK_MESSAGE);
 }
@@ -322,27 +294,31 @@ function__stderr_no_path(void **config_ptr)
  * test configurations
  */
 static mock_config config_no_stderr = {
-	0, 0, 0, 0, RPMA_LOG_DISABLED
+	0, 0, 0, 0, RPMA_LOG_DISABLED, MOCK_FILE_NAME
+};
+
+static mock_config config_no_stderr_path_absolute = {
+	0, 0, 0, 0, RPMA_LOG_DISABLED, MOCK_FILE_NAME_ABSOLUTE
 };
 
 static mock_config config_no_error = {
-	0, 0, 0, 0, RPMA_LOG_LEVEL_DEBUG
+	0, 0, 0, 0, RPMA_LOG_LEVEL_DEBUG, MOCK_FILE_NAME
 };
 
 static mock_config config_gettime_error = {
-	1, 0, 0, 0, RPMA_LOG_LEVEL_DEBUG
+	1, 0, 0, 0, RPMA_LOG_LEVEL_DEBUG, MOCK_FILE_NAME
 };
 
 static mock_config config_localtime_error = {
-	0, 1, 0, 0, RPMA_LOG_LEVEL_DEBUG
+	0, 1, 0, 0, RPMA_LOG_LEVEL_DEBUG, MOCK_FILE_NAME
 };
 
 static mock_config config_strftime_error = {
-	0, 0, 1, 0, RPMA_LOG_LEVEL_DEBUG
+	0, 0, 1, 0, RPMA_LOG_LEVEL_DEBUG, MOCK_FILE_NAME
 };
 
 static mock_config config_snprintf_error = {
-	0, 0, 0, 1, RPMA_LOG_LEVEL_DEBUG
+	0, 0, 0, 1, RPMA_LOG_LEVEL_DEBUG, MOCK_FILE_NAME
 };
 
 int
@@ -361,12 +337,12 @@ main(int argc, char *argv[])
 		cmocka_unit_test_prestate_setup_teardown(
 			function__syslog_no_path,
 			setup_thresholds, NULL, &config_no_stderr),
-		cmocka_unit_test_prestate_setup_teardown(
-			function__syslog_absolute_path,
-			setup_thresholds, NULL, &config_no_stderr),
-		cmocka_unit_test_prestate_setup_teardown(
-			function__syslog_relative_path,
-			setup_thresholds, NULL, &config_no_stderr),
+		{"function__syslog_path_relative",
+			function__syslog, setup_thresholds, NULL,
+			&config_no_stderr},
+		{"function__syslog_path_absolute",
+			function__syslog, setup_thresholds, NULL,
+			&config_no_stderr_path_absolute},
 
 		/* stderr tests - time-related fails */
 		{"function__stderr_path_gettime_error",
