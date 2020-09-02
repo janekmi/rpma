@@ -103,28 +103,48 @@ main(int argc, char *argv[])
 		(void) printf("Value sent: %" PRIu64 "\n", cntr);
 		*send = cntr;
 		if ((ret = rpma_send(conn, send_mr, 0, MSG_SIZE,
-				RPMA_F_COMPLETION_ON_ERROR, NULL)))
+				RPMA_F_COMPLETION_ALWAYS, NULL)))
 			break;
 
-		/* prepare completions, get one and validate it */
-		if ((ret = rpma_conn_prepare_completions(conn))) {
-			break;
-		} else if ((ret = rpma_conn_next_completion(conn, &cmpl))) {
-			break;
-		} else if (cmpl.op != RPMA_OP_RECV ||
-				cmpl.op_status != IBV_WC_SUCCESS ||
-				cmpl.op_context != recv ||
-				cmpl.byte_len != MSG_SIZE) {
-			(void) fprintf(stderr,
-					"received completion is not as expected (%s != %s || %p != %p [cmpl.op_context] || %"
+		int send_cmpl = 0;
+		int recv_cmpl = 0;
+
+		do {
+			/* prepare completions, get one and validate it */
+			if ((ret = rpma_conn_prepare_completions(conn))) {
+				break;
+			} else if ((ret = rpma_conn_next_completion(conn,
+					&cmpl))) {
+				break;
+			} else if (cmpl.op_status != IBV_WC_SUCCESS ||
+					cmpl.byte_len != MSG_SIZE) {
+				(void) fprintf(stderr,
+					"received completion is not as expected (%s != %s || %"
 					PRIu32 " != %ld [cmpl.byte_len] )\n",
 					ibv_wc_status_str(cmpl.op_status),
 					ibv_wc_status_str(IBV_WC_SUCCESS),
-					cmpl.op_context, recv,
 					cmpl.byte_len, MSG_SIZE);
-			ret = -1;
+				ret = -1;
+				break;
+			}
+
+			if (cmpl.op == RPMA_OP_SEND) {
+				send_cmpl = 1;
+			} else if (cmpl.op == RPMA_OP_RECV) {
+				if (cmpl.op_context != recv) {
+					(void) fprintf(stderr,
+						"received cmpl.op_context is not as expected (%p != %p)\n",
+						cmpl.op_context, recv);
+					ret = -1;
+					break;
+				}
+
+				recv_cmpl = 1;
+			}
+		} while (!send_cmpl && !recv_cmpl);
+
+		if (!send_cmpl || !recv_cmpl)
 			break;
-		}
 
 		/* copy the new value of the counter and print it out */
 		cntr = *recv;
