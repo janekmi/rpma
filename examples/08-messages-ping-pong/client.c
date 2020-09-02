@@ -116,14 +116,13 @@ main(int argc, char *argv[])
 			} else if ((ret = rpma_conn_next_completion(conn,
 					&cmpl))) {
 				break;
-			} else if (cmpl.op_status != IBV_WC_SUCCESS ||
-					cmpl.byte_len != MSG_SIZE) {
+			} else if (cmpl.op_status != IBV_WC_SUCCESS) {
+
 				(void) fprintf(stderr,
-					"received completion is not as expected (%s != %s || %"
-					PRIu32 " != %ld [cmpl.byte_len] )\n",
-					ibv_wc_status_str(cmpl.op_status),
-					ibv_wc_status_str(IBV_WC_SUCCESS),
-					cmpl.byte_len, MSG_SIZE);
+					"operation %d failed: %s\n",
+					cmpl.op,
+					ibv_wc_status_str(cmpl.op_status));
+
 				ret = -1;
 				break;
 			}
@@ -131,10 +130,13 @@ main(int argc, char *argv[])
 			if (cmpl.op == RPMA_OP_SEND) {
 				send_cmpl = 1;
 			} else if (cmpl.op == RPMA_OP_RECV) {
-				if (cmpl.op_context != recv) {
+				if (cmpl.op_context != recv ||
+						cmpl.byte_len != MSG_SIZE) {
 					(void) fprintf(stderr,
-						"received cmpl.op_context is not as expected (%p != %p)\n",
-						cmpl.op_context, recv);
+						"received completion is not as expected (%p != %p [cmpl.op_context] || %"
+						PRIu32 " != %ld [cmpl.byte_len] )\n",
+						cmpl.op_context, recv,
+						cmpl.byte_len, MSG_SIZE);
 					ret = -1;
 					break;
 				}
