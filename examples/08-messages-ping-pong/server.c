@@ -103,26 +103,49 @@ main(int argc, char *argv[])
 		goto err_ep_shutdown;
 	}
 
+	/* RPMA_OP_SEND completion in the first round is not present */
+	int send_cmpl = 1;
+	int recv_cmpl = 0;
+
 	while (1) {
-		/* prepare completions, get one and validate it */
-		if ((ret = rpma_conn_prepare_completions(conn))) {
+		do {
+			/* prepare completions, get one and validate it */
+			if ((ret = rpma_conn_prepare_completions(conn))) {
+				break;
+			} else if ((ret = rpma_conn_next_completion(conn,
+					&cmpl))) {
+				break;
+			} else if (cmpl.op_status != IBV_WC_SUCCESS) {
+
+				(void) fprintf(stderr,
+					"operation %d failed: %s\n",
+					cmpl.op,
+					ibv_wc_status_str(cmpl.op_status));
+
+				ret = -1;
+				break;
+			}
+
+			if (cmpl.op == RPMA_OP_SEND) {
+				send_cmpl = 1;
+			} else if (cmpl.op == RPMA_OP_RECV) {
+				if (cmpl.op_context != recv ||
+						cmpl.byte_len != MSG_SIZE) {
+					(void) fprintf(stderr,
+						"received completion is not as expected (%p != %p [cmpl.op_context] || %"
+						PRIu32 " != %ld [cmpl.byte_len] )\n",
+						cmpl.op_context, recv,
+						cmpl.byte_len, MSG_SIZE);
+					ret = -1;
+					break;
+				}
+
+				recv_cmpl = 1;
+			}
+		} while (!send_cmpl || !recv_cmpl);
+
+		if (ret)
 			break;
-		} else if ((ret = rpma_conn_next_completion(conn, &cmpl))) {
-			break;
-		} else if (cmpl.op != RPMA_OP_RECV ||
-				cmpl.op_status != IBV_WC_SUCCESS ||
-				cmpl.op_context != recv ||
-				cmpl.byte_len != MSG_SIZE) {
-			(void) fprintf(stderr,
-					"received completion is not as expected (%d != %d [cmpl.op] || %s != %s || %p != %p [cmpl.op_context] || %"
-					PRIu32 " != %ld [cmpl.byte_len] )\n",
-					cmpl.op, RPMA_OP_RECV,
-					ibv_wc_status_str(cmpl.op_status),
-					ibv_wc_status_str(IBV_WC_SUCCESS),
-					cmpl.op_context, recv,
-					cmpl.byte_len, MSG_SIZE);
-			break;
-		}
 
 		if (*recv == I_M_DONE)
 			break;
@@ -140,8 +163,12 @@ main(int argc, char *argv[])
 		/* send the new value to the client */
 		(void) printf("Value sent: %" PRIu64 "\n", *send);
 		if ((ret = rpma_send(conn, send_mr, 0, MSG_SIZE,
-				RPMA_F_COMPLETION_ON_ERROR, NULL)))
+				RPMA_F_COMPLETION_ALWAYS, NULL)))
 			break;
+
+		/* reset */
+		send_cmpl = 0;
+		recv_cmpl = 0;
 	}
 
 	ret |= common_disconnect_and_wait_for_conn_close(&conn);
