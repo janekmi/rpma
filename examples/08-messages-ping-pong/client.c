@@ -143,9 +143,9 @@ main(int argc, char *argv[])
 
 				recv_cmpl = 1;
 			}
-		} while (!send_cmpl && !recv_cmpl);
+		} while (!send_cmpl || !recv_cmpl);
 
-		if (!send_cmpl || !recv_cmpl)
+		if (ret)
 			break;
 
 		/* copy the new value of the counter and print it out */
