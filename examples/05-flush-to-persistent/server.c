@@ -183,10 +183,12 @@ main(int argc, char *argv[])
 		goto err_mr_dereg;
 
 	data->data_offset = data_offset;
+	data->pcfg_desc_offset = 0;
 	data->pcfg_desc_size = pcfg_desc_size;
 
 	/* get the peer's configuration descriptor */
-	ret = rpma_peer_cfg_get_descriptor(pcfg, data->pcfg_desc);
+	ret = rpma_peer_cfg_get_descriptor(pcfg,
+			&data->descriptors[data->pcfg_desc_offset]);
 	if (ret)
 		goto err_free_data;
 
