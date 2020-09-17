@@ -21,6 +21,8 @@
 struct common_data {
 	size_t data_offset;
 	rpma_mr_descriptor mr_desc;
+	size_t mr_desc_offset;
+	size_t mr_desc_size;
 	size_t pcfg_desc_offset;
 	size_t pcfg_desc_size;
 	char descriptors[];

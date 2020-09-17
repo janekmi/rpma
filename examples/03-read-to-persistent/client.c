@@ -157,8 +157,10 @@ main(int argc, char *argv[])
 	(void) printf("Next value: %s\n", hello->str);
 
 	/* calculate data for the server read */
-	struct common_data data;
-	data.data_offset = data_offset + offsetof(struct hello_t, str);
+	size_t data_size = sizeof(struct common_data) +
+			sizeof(rpma_mr_descriptor);
+	struct common_data *data = malloc(data_size);
+	data->data_offset = data_offset + offsetof(struct hello_t, str);
 
 	/* RPMA resources */
 	struct rpma_peer *peer = NULL;
@@ -178,14 +180,17 @@ main(int argc, char *argv[])
 		goto err_peer_delete;
 
 	/* get the memory region's descriptor */
-	ret = rpma_mr_get_descriptor(mr, &data.mr_desc);
+	data->mr_desc_offset = 0;
+	data->mr_desc_size = sizeof(rpma_mr_descriptor);
+	ret = rpma_mr_get_descriptor(mr,
+			&data->descriptors[data->mr_desc_offset]);
 	if (ret)
 		goto err_peer_delete;
 
 	/* establish a new connection to a server listening at addr:port */
 	struct rpma_conn_private_data pdata;
-	pdata.ptr = &data;
-	pdata.len = sizeof(struct common_data);
+	pdata.ptr = data;
+	pdata.len = data_size;
 	ret = client_connect(peer, addr, port, &pdata, &conn);
 	if (ret)
 		goto err_mr_dereg;
