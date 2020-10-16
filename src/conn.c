@@ -25,6 +25,8 @@ struct rpma_conn {
 	struct ibv_comp_channel *channel; /* completion event channel */
 	struct ibv_cq *cq; /* completion queue of the CM ID */
 
+	unsigned cqe_num; /* # of collected completion queue entries */
+
 	struct rpma_conn_private_data data; /* private data of the CM ID */
 	struct rpma_flush *flush; /* flushing object */
 
@@ -76,6 +78,7 @@ rpma_conn_new(struct rpma_peer *peer, struct rdma_cm_id *id,
 	conn->evch = evch;
 	conn->channel = cq->channel;
 	conn->cq = cq;
+	conn->cqe_num = 0;
 	conn->data.ptr = NULL;
 	conn->data.len = 0;
 	conn->flush = flush;
@@ -449,14 +452,6 @@ rpma_conn_completion_wait(struct rpma_conn *conn)
 	if (ibv_get_cq_event(conn->channel, &ev_cq, &ev_ctx))
 		return RPMA_E_NO_COMPLETION;
 
-	/*
-	 * ACK the collected CQ event.
-	 *
-	 * XXX for performance reasons, it may be beneficial to ACK more than
-	 * one CQ event at the same time.
-	 */
-	ibv_ack_cq_events(conn->cq, 1 /* # of CQ events */);
-
 	/* request for the next event on the CQ channel */
 	errno = ibv_req_notify_cq(conn->cq,
 			0 /* all completions */);
@@ -497,6 +492,9 @@ rpma_conn_completion_get(struct rpma_conn *conn,
 		return RPMA_E_UNKNOWN;
 	}
 
+	/* increase */
+	conn->cqe_num++;
+
 	switch (wc.opcode) {
 	case IBV_WC_RDMA_READ:
 		cmpl->op = RPMA_OP_READ;
@@ -525,6 +523,21 @@ rpma_conn_completion_get(struct rpma_conn *conn,
 				cmpl->op_context,
 				ibv_wc_status_str(cmpl->op_status));
 	}
+
+	return 0;
+}
+
+/*
+ * rpma_conn_completion_done -- ACK the collected CQ events
+ */
+int
+rpma_conn_completion_done(struct rpma_conn *conn)
+{
+	if (conn == NULL)
+		return RPMA_E_INVAL;
+
+	ibv_ack_cq_events(conn->cq, conn->cqe_num);
+	conn->cqe_num = 0;
 
 	return 0;
 }

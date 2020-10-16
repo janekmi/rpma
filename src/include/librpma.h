@@ -1543,6 +1543,37 @@ int rpma_conn_get_private_data(const struct rpma_conn *conn,
 		struct rpma_conn_private_data *pdata);
 
 /** 3
+ * rpma_conn_completion_done - XXX
+ *
+ * SYNOPSIS
+ *
+ *	#include <librpma.h>
+ *
+ *	struct rpma_conn;
+ *	struct rpma_conn_private_data;
+ *	int rpma_conn_get_private_data(const struct rpma_conn *conn,
+ *			struct rpma_conn_private_data *pdata);
+ *
+ * DESCRIPTION
+ * rpma_conn_get_private_data() obtains the pointer to the private data
+ * given by the other side of the connection.
+ *
+ * RETURN VALUE
+ * The rpma_conn_get_private_data() function returns 0 on success or a negative
+ * error code on failure. rpma_conn_get_private_data() does not set
+ * *pdata value on failure.
+ *
+ * ERRORS
+ * rpma_conn_get_private_data() can fail with the following error:
+ *
+ * - RPMA_E_INVAL - conn or pdata is NULL
+ *
+ * SEE ALSO
+ * rpma_conn_req_connect(3), librpma(7) and https://pmem.io/rpma/
+ */
+int rpma_conn_completion_done(struct rpma_conn *conn);
+
+/** 3
  * rpma_conn_apply_remote_peer_cfg - apply remote peer cfg to the connection
  *
  * SYNOPSIS
