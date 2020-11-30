@@ -52,12 +52,14 @@ for ds in $DATA_SIZE; do
     # run the server
     sshpass -p "$REMOTE_PASS" ssh $REMOTE_USER@$SERVER_IP \
         "numactl -N $REMOTE_JOB_NUMA ib_read_lat --size $ds \
-        $REMOTE_AUX_PARAMS &"
+        $REMOTE_AUX_PARAMS > /dev/shm/ib_read_lat.log " \
+	2>&1 > /dev/shm/ib_read_lat_ssh.log &
+    sleep 1
 
     # XXX --duration hides detailed statistics
     echo "[size: $ds, iters: $ITERATIONS] (duration: ~60s)"
-    numactl -N $NUMA ib_read_lat --size $ds --iters $ITERATIONS \
-        --perform_warm_up $SERVER_IP $AUX_PARAMS 2>/dev/null | grep $ds | \
+    numactl -N $JOB_NUMA ib_read_lat --size $ds --iters $ITERATIONS \
+        --perform_warm_up $SERVER_IP $AUX_PARAMS | grep $ds | \
         grep -v '[B]' | sed -r 's/[[:blank:]]+/,/g' \
         >> $OUTPUT
 done
