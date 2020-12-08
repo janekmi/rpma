@@ -13,30 +13,31 @@
 # - converting units
 #
 # The standardized-CSV format columns are (in order):
+# - threads - number of threads [1] (optional)
 # - bs - block size [B]
-# - lat_min - min latency [usec]
-# - lat_max - max latency [usec]
-# - lat_mode - mode latency [usec] (optional)
-# - lat_avg - avg latency [usec]
-# - lat_stdev - stdev latency [usec]
-# - lat_pctl_99.0 - 99.0th percentile latency [usec]
-# - lat_pctl_99.9 - 99.9th percentile latency [usec]
-# - lat_pctl_99.99 - 99.99th percentile latency [usec] (optional)
-# - lat_pctl_99.999 - 99.999th percentile latency [usec] (optional)
-#
-# - bw_min - min bandwidth [Gb/sec]
-# - bw_max - max bandwidth [Gb/sec]
-# - bw_avg - average bandwidth [Gb/sec]
-# - msg_rate - message rate [Mpps]
+# - ops - number of operations executed [1]
+# - lat_* group (optional)
+#   - lat_min - min latency [usec]
+#   - lat_max - max latency [usec]
+#   - lat_avg - avg latency [usec]
+#   - lat_stdev - stdev latency [usec]
+#   - lat_pctl_99.0 - 99.0th percentile latency [usec]
+#   - lat_pctl_99.9 - 99.9th percentile latency [usec]
+#   - lat_pctl_99.99 - 99.99th percentile latency [usec] (optional)
+#   - lat_pctl_99.999 - 99.999th percentile latency [usec] (optional)
+# - bw_* group (optional)
+#   - bw_min - min bandwidth [Gb/sec] (optional)
+#   - bw_max - max bandwidth [Gb/sec] (optional)
+#   - bw_avg - avg bandwidth [Gb/sec]
 #
 
 import argparse
 import pandas as pd
 
 fio_input_names = [
-    'bs', 'lat_min', 'lat_max', 'lat_avg', 'lat_stdev', 'ops',
+    'bs', 'threads', 'lat_min', 'lat_max', 'lat_avg', 'lat_stdev', 'ops',
     'lat_pctl_99.0', 'lat_pctl_99.9', 'lat_pctl_99.99', 'lat_pctl_99.999',
-    'bw_avg', 'bw_min', 'bw_max', 'threads']
+    'bw_avg', 'bw_min', 'bw_max']
 
 fio_nsec_2_usec_names = [
     'lat_min', 'lat_max', 'lat_avg', 'lat_stdev', 'lat_pctl_99.0',
@@ -56,14 +57,14 @@ ib_lat_input_names = [
     'lat_pctl_99.0', 'lat_pctl_99.9']
 
 ib_lat_output_names = [
-    'bs', 'ops', 'lat_min', 'lat_max', 'lat_mode', 'lat_avg', 'lat_stdev',
+    'bs', 'ops', 'lat_min', 'lat_max', 'lat_avg', 'lat_stdev',
     'lat_pctl_99.0', 'lat_pctl_99.9']
 
 ib_bw_input_names = [
     'threads', 'bs', 'ops', 'bw_peak', 'bw_avg', 'msg_rate']
 
 ib_bw_output_names = [
-    'threads', 'bs', 'ops', 'bw_avg', 'msg_rate']
+    'threads', 'bs', 'ops', 'bw_avg']
 
 def main():
     parser = argparse.ArgumentParser(
@@ -92,7 +93,7 @@ def main():
         # convert KiB/s to Gb/s
         df = df.apply(lambda x: round(x * KiBpbs_2_Gbps, 2) \
             if x.name in fio_KiBps_2_Gbps_names else x)
-        df = df.reindex(columns=fio_names)
+        df = df.reindex(columns=fio_output_names)
     df.to_csv(args.output_file, index=False)
 
 if __name__ == "__main__":
