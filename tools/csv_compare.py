@@ -18,9 +18,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 column_to_label = {
-    'bs':   'block size [B]'
+    'bs':   'block size [B]',
     'lat':  'latency [nsec]',
-    'bw':   'bandwidth [KiB/s]',
+    'bw':   'bandwidth [Gb/s]',
 }
 
 layouts = {
@@ -84,6 +84,11 @@ def main():
     parser.add_argument('--legend', metavar='SERIES', nargs='+',
         help='a legend for the data series read from the CSV files')
     args = parser.parse_args()
+
+    if args.legend is None:
+        args.legend = args.csv_files
+    elif len(args.legend) != len(args.csv_files):
+        raise Exception('The number of legend entries does not match the number of CSV files')
 
     # read all CSV files
     dfs = []
