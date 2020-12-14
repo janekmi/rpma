@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 
 column_to_label = {
     'threads':  '# of threads',
+    'iodepth':  '# of ops submitted',
     'bs':       'block size [B]',
     'lat':      'latency [nsec]',
     'bw':       'bandwidth [Gb/s]',
@@ -46,6 +47,14 @@ layouts = {
         'nrows': 1,
         'ncols': 1,
         'x': 'threads',
+        'columns': [
+            'bw_avg'
+        ]
+    },
+    'bw_vs_dp': {
+        'nrows': 1,
+        'ncols': 1,
+        'x': 'iodepth',
         'columns': [
             'bw_avg'
         ]
