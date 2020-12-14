@@ -17,11 +17,13 @@ import matplotlib.pyplot as plt
 
 column_to_label = {
     'threads':  '# of threads',
-    'iodepth':  '# of ops submitted',
+    'iodepth':  'iodepth',
     'bs':       'block size [B]',
     'lat':      'latency [nsec]',
     'bw':       'bandwidth [Gb/s]',
 }
+
+dimmensions = {'threads', 'iodepth', 'bs'}
 
 layouts = {
     'lat': {
@@ -35,30 +37,14 @@ layouts = {
             'lat_pctl_99.99', 'lat_pctl_99.999'
         ]
     },
-    'bw_vs_bs': {
+    'bw': {
         'nrows': 1,
         'ncols': 1,
-        'x': 'bs',
+        'x': '<arg_axis>',
         'columns': [
             'bw_avg'
         ]
     },
-    'bw_vs_th': {
-        'nrows': 1,
-        'ncols': 1,
-        'x': 'threads',
-        'columns': [
-            'bw_avg'
-        ]
-    },
-    'bw_vs_dp': {
-        'nrows': 1,
-        'ncols': 1,
-        'x': 'iodepth',
-        'columns': [
-            'bw_avg'
-        ]
-    }
 }
 
 def get_label(column):
@@ -194,6 +180,9 @@ def main():
         default='compare.png', help='an output file')
     parser.add_argument('--output_layout', metavar='OUTPUT_LAYOUT',
         choices=layouts.keys(), required=True, help='an output file layout')
+    parser.add_argument('--arg_axis', metavar='OUTPUT_LAYOUT',
+        choices=dimmensions, required=False,
+        help='an axis for layouts which requires to pick one')
     parser.add_argument('--output_with_tables', action='store_true',
         help='an output file layout')
     parser.add_argument('--output_title', metavar='OUTPUT_TITLE',
@@ -209,18 +198,26 @@ def main():
         raise Exception(
             'The number of legend entries does not match the number of CSV files')
 
+    # get a layout
+    layout = layouts.get(args.output_layout)
+
+    # fill out an optional axis with the provided argument
+    if args.output_layout == 'bw':
+        if args.arg_axis is None:
+            raise Exception('The bw layout requires --arg_axis')
+        layout.update('x', args.arg_axis)
+
+    # get layout parameters
+    columns = layout.get('columns')
+    nrows = layout.get('nrows')
+    ncols =  layout.get('ncols')
+    x = layout.get('x')
+
     # read all CSV files
     dfs = []
     for csv_file in args.csv_files:
         df = pd.read_csv(csv_file)
         dfs.append(df)
-
-    # get layout parameters
-    layout = layouts.get(args.output_layout)
-    columns = layout.get('columns')
-    nrows = layout.get('nrows')
-    ncols =  layout.get('ncols')
-    x = layout.get('x')
 
     # prepare indices
     indices = list(range(1, len(columns) + 1))
