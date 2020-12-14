@@ -205,7 +205,7 @@ def main():
     if args.output_layout == 'bw':
         if args.arg_axis is None:
             raise Exception('The bw layout requires --arg_axis')
-        layout.update('x', args.arg_axis)
+        layout['x'] = args.arg_axis
 
     # get layout parameters
     columns = layout.get('columns')
