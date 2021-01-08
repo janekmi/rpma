@@ -1389,6 +1389,17 @@ int rpma_conn_cfg_set_rq_size(struct rpma_conn_cfg *cfg, uint32_t rq_size);
 int rpma_conn_cfg_get_rq_size(const struct rpma_conn_cfg *cfg,
 		uint32_t *rq_size);
 
+enum rpma_cq_mode {
+	RPMA_CQ_MODE_SINGLE,
+	RPMA_CQ_MODE_SEND_AND_RECV
+};
+
+int rpma_conn_cfg_set_cq_mode(const struct rpma_conn_cfg *cfg,
+		enum rpma_cq_mode cq_mode);
+
+int rpma_conn_cfg_get_cq_mode(const struct rpma_conn_cfg *cfg,
+		enum rpma_cq_mode *cq_mode);
+
 /* connection */
 
 struct rpma_conn;

@@ -35,9 +35,6 @@ struct rpma_conn_req {
 
 	/* a parent RPMA peer of this request - needed for derivative objects */
 	struct rpma_peer *peer;
-
-	/* completion event channel - copy for convenience */
-	struct ibv_comp_channel *channel;
 };
 
 /*
@@ -84,7 +81,7 @@ rpma_conn_req_from_id(struct rpma_peer *peer, struct rdma_cm_id *id,
 	}
 
 	/* create a QP */
-	ret = rpma_peer_create_qp(peer, id, cq, cfg);
+	ret = rpma_peer_create_qp(peer, id, cq, cq, cfg);
 	if (ret)
 		goto err_destroy_cq;
 
@@ -100,7 +97,6 @@ rpma_conn_req_from_id(struct rpma_peer *peer, struct rdma_cm_id *id,
 	(*req_ptr)->data.ptr = NULL;
 	(*req_ptr)->data.len = 0;
 	(*req_ptr)->peer = peer;
-	(*req_ptr)->channel = channel;
 
 	return 0;
 

@@ -39,7 +39,8 @@ struct rpma_peer {
  */
 int
 rpma_peer_create_qp(struct rpma_peer *peer, struct rdma_cm_id *id,
-		struct ibv_cq *cq, const struct rpma_conn_cfg *cfg)
+		struct ibv_cq *send_cq, struct ibv_cq *recv_cq,
+		const struct rpma_conn_cfg *cfg)
 {
 	if (peer == NULL || id == NULL || cq == NULL)
 		return RPMA_E_INVAL;
@@ -52,8 +53,8 @@ rpma_peer_create_qp(struct rpma_peer *peer, struct rdma_cm_id *id,
 
 	struct ibv_qp_init_attr qp_init_attr;
 	qp_init_attr.qp_context = NULL;
-	qp_init_attr.send_cq = cq;
-	qp_init_attr.recv_cq = cq;
+	qp_init_attr.send_cq = send_cq;
+	qp_init_attr.recv_cq = recv_cq;
 	qp_init_attr.srq = NULL;
 	qp_init_attr.cap.max_send_wr = sq_size;
 	qp_init_attr.cap.max_recv_wr = rq_size;

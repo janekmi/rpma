@@ -22,7 +22,6 @@
 struct rpma_conn {
 	struct rdma_cm_id *id; /* a CM ID of the connection */
 	struct rdma_event_channel *evch; /* event channel of the CM ID */
-	struct ibv_comp_channel *channel; /* completion event channel */
 	struct ibv_cq *cq; /* completion queue of the CM ID */
 
 	struct rpma_conn_private_data data; /* private data of the CM ID */
@@ -235,6 +234,7 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 		return RPMA_E_INVAL;
 
 	struct rpma_conn *conn = *conn_ptr;
+	struct ibv_comp_channel *channel;
 	if (conn == NULL)
 		return 0;
 
@@ -246,6 +246,7 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 
 	rdma_destroy_qp(conn->id);
 
+	channel = conn->cq->channel;
 	errno = ibv_destroy_cq(conn->cq);
 	if (errno) {
 		RPMA_LOG_ERROR_WITH_ERRNO(errno, "ibv_destroy_cq()");
@@ -253,7 +254,7 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 		goto err_destroy_comp_channel;
 	}
 
-	errno = ibv_destroy_comp_channel(conn->channel);
+	errno = ibv_destroy_comp_channel(channel);
 	if (errno) {
 		RPMA_LOG_ERROR_WITH_ERRNO(errno, "ibv_destroy_comp_channel()");
 		ret = RPMA_E_PROVIDER;
@@ -275,6 +276,7 @@ rpma_conn_delete(struct rpma_conn **conn_ptr)
 	return 0;
 
 err_destroy_cq:
+	channel = conn->cq->channel;
 	(void) ibv_destroy_cq(conn->cq);
 err_destroy_comp_channel:
 	(void) ibv_destroy_comp_channel(conn->channel);
@@ -429,7 +431,7 @@ rpma_conn_get_completion_fd(const struct rpma_conn *conn, int *fd)
 	if (conn == NULL || fd == NULL)
 		return RPMA_E_INVAL;
 
-	*fd = conn->channel->fd;
+	*fd = conn->cq->channel->fd;
 
 	return 0;
 }
@@ -446,7 +448,7 @@ rpma_conn_completion_wait(struct rpma_conn *conn)
 	/* wait for the completion event */
 	struct ibv_cq *ev_cq;	/* unused */
 	void *ev_ctx;		/* unused */
-	if (ibv_get_cq_event(conn->channel, &ev_cq, &ev_ctx))
+	if (ibv_get_cq_event(conn->cq->channel, &ev_cq, &ev_ctx))
 		return RPMA_E_NO_COMPLETION;
 
 	/*

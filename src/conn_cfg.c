@@ -26,6 +26,7 @@
 
 struct rpma_conn_cfg {
 	int timeout_ms;	/* connection establishment timeout */
+	enum rpma_cq_mode cq_mode; /* how many CQs to be created */
 	uint32_t cq_size;	/* CQ size */
 	uint32_t sq_size;	/* SQ size */
 	uint32_t rq_size;	/* RQ size */
@@ -33,6 +34,7 @@ struct rpma_conn_cfg {
 
 static struct rpma_conn_cfg Conn_cfg_default  = {
 	.timeout_ms = RPMA_DEFAULT_TIMEOUT_MS,
+	.cq_mode = RPMA_CQ_MODE_SINGLE,
 	.cq_size = RPMA_DEFAULT_Q_SIZE,
 	.sq_size = RPMA_DEFAULT_Q_SIZE,
 	.rq_size = RPMA_DEFAULT_Q_SIZE
@@ -220,6 +222,36 @@ rpma_conn_cfg_get_rq_size(const struct rpma_conn_cfg *cfg, uint32_t *rq_size)
 		return RPMA_E_INVAL;
 
 	*rq_size = cfg->rq_size;
+
+	return 0;
+}
+
+/*
+ * rpma_conn_cfg_set_cq_mode -- XXX
+ */
+int
+rpma_conn_cfg_set_cq_mode(const struct rpma_conn_cfg *cfg,
+		enum rpma_cq_mode cq_mode)
+{
+	if (cfg == NULL)
+		return RPMA_E_INVAL;
+
+	cfg->cq_mode = cq_mode;
+
+	return 0;
+}
+
+/*
+ * rpma_conn_cfg_get_cq_mode -- XXX
+ */
+int
+rpma_conn_cfg_get_cq_mode(const struct rpma_conn_cfg *cfg,
+		enum rpma_cq_mode *cq_mode)
+{
+	if (cfg == NULL || cq_mode == NULL)
+		return RPMA_E_INVAL;
+
+	*cq_mode = cfg->cq_mode;
 
 	return 0;
 }
