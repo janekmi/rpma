@@ -17,7 +17,7 @@ function usage()
 {
 	echo "Error: $1"
 	echo
-	echo "Usage: $0 <server_ip> all|apm|gpspm [all|read|write|rw|randrw] [all|bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat]"
+	echo "Usage: $0 <server_ip> all|apm|gpspm [all|read|write|rw|randrw] [all|bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat|bw-test]"
 	echo "       $0 --env - show environment variables used by the script"
 	echo
 	echo "Notes:"
@@ -119,6 +119,13 @@ function benchmark_one() {
 	esac
 
 	case $MODE in
+	bw-test)
+		THREADS=1
+		BLOCK_SIZE=16384
+		ITERATIONS=1
+		DEPTH=4
+		NAME_SUFFIX=th${THREADS}_dp${DEPTH}
+		;;
 	bw-bs)
 		THREADS=1
 		BLOCK_SIZE=(256 1024 4096 8192 16384 32768 65536)
@@ -202,6 +209,11 @@ function benchmark_one() {
 
 	for i in $(seq 0 $(expr $ITERATIONS - 1)); do
 		case $MODE in
+		bw-test)
+			BS="${BLOCK_SIZE}"
+			TH="${THREADS}"
+			DP="${DEPTH}"
+			;;
 		bw-bs)
 			BS="${BLOCK_SIZE[${i}]}"
 			TH="${THREADS}"
@@ -320,7 +332,7 @@ all)
 esac
 
 case $MODES in
-bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat)
+bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat|bw-test)
 	;;
 all)
 	MODES="lat bw-bs bw-th bw-dp-lin bw-dp-exp"

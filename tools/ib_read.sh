@@ -23,7 +23,7 @@ function usage()
 {
 	echo "Error: $1"
 	echo
-	echo "usage: $0 <server_ip> <all|bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat>"
+	echo "usage: $0 <server_ip> <all|bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat|bw-test>"
 	echo
 	echo "export JOB_NUMA=0"
 	echo "export AUX_PARAMS='-d mlx5_0 -R'"
@@ -79,6 +79,19 @@ function benchmark_one() {
 	MODE=$2
 
 	case $MODE in
+	bw-test)
+		IB_TOOL=ib_read_bw
+		HEADER=$HEADER_BW
+		THREADS=1
+		BLOCK_SIZE=16384
+		DEPTH=4
+		# XXX values measured empirically, so that duration was ~60s
+		# 100000000 is the maximum value of iterations
+		ITERATIONS=(25831474)
+		AUX_PARAMS="$AUX_PARAMS --report_gbits"
+		NAME="${MODE}-${THREADS}th"
+		verify_block_size
+		;;
 	bw-bs)
 		IB_TOOL=ib_read_bw
 		HEADER=$HEADER_BW
@@ -163,6 +176,17 @@ function benchmark_one() {
 
 	for i in $(seq 0 $(expr ${#ITERATIONS[@]} - 1)); do
 		case $MODE in
+		bw-test)
+			IT=${ITERATIONS[${i}]}
+			BS="${BLOCK_SIZE}"
+			TH="${THREADS}"
+			DP="${DEPTH}"
+			IT_OPT="--iters $IT"
+			BS_OPT="--size $BS"
+			QP_OPT="--qp $TH"
+			DP_OPT="--tx-depth=${DP}"
+			echo -n "${TH},${DP}," >> $OUTPUT
+			;;
 		bw-bs)
 			IT=${ITERATIONS[${i}]}
 			BS="${BLOCK_SIZE[${i}]}"
@@ -236,7 +260,7 @@ SERVER_IP=$1
 MODES=$2
 
 case $MODES in
-bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat)
+bw-bs|bw-dp-exp|bw-dp-lin|bw-th|lat|bw-test)
 	;;
 all)
 	MODES="bw-bs bw-dp-exp bw-dp-lin bw-th lat"
