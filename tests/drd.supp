@@ -79,14 +79,6 @@
    ...
 }
 
-{
-   Conflicting store of size 4
-   drd:ConflictingAccess
-   fun:ucma_init
-   fun:ucma_init
-   ...
-}
-
 #
 # Assesment: XXX required
 #
