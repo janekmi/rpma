@@ -119,4 +119,4 @@ docker run --privileged=true --name=$containerName -i $TTY \
 	-v $HOST_WORKDIR:$WORKDIR \
 	-v /etc/localtime:/etc/localtime \
 	-w $SCRIPTSDIR \
-	$imageName $command
+	$imageName /bin/bash
